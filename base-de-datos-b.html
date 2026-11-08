@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Base de Datos B</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#13110f; --bg2:#1c1916; --line:#2e2925; --ink:#efe6d6; --mute:#9a8f80;
+  --acc:#ff6b3d; --ok:#8fd19e; --ko:#ff5a5f; --okbg:rgba(143,209,158,.10); --kobg:rgba(255,90,95,.10);
+  --mono:"IBM Plex Mono",ui-monospace,monospace; --disp:"Bricolage Grotesque",Georgia,serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  min-height:100vh;background:var(--bg);color:var(--ink);font-family:var(--disp);font-size:17px;line-height:1.5;
+  background-image:
+    linear-gradient(var(--line) 1px,transparent 1px),
+    linear-gradient(90deg,var(--line) 1px,transparent 1px),
+    radial-gradient(1200px 600px at 85% -10%,rgba(255,107,61,.16),transparent 60%);
+  background-size:48px 48px,48px 48px,100% 100%;
+  background-attachment:fixed;
+}
+body::after{ /* grain */
+  content:"";position:fixed;inset:0;pointer-events:none;opacity:.07;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.wrap{max-width:860px;margin:0 auto;padding:40px 16px 80px}
+header{display:grid;grid-template-columns:1fr auto;gap:12px 24px;align-items:end;margin-bottom:28px}
+.kicker{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--acc)}
+h1{font-size:clamp(44px,9vw,92px);font-weight:800;line-height:.9;letter-spacing:-.04em;grid-column:1}
+h1 em{font-style:normal;color:var(--acc)}
+.tabs{display:flex;gap:4px;font-family:var(--mono);font-size:13px;background:var(--bg2);border:1px solid var(--line);padding:4px;border-radius:999px}
+.tabs button{all:unset;cursor:pointer;padding:7px 14px;border-radius:999px;color:var(--mute);transition:.2s}
+.tabs button[aria-selected=true]{background:var(--ink);color:var(--bg)}
+.tabs button:focus-visible,.opt:focus-visible,.btn:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+
+.meta{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:13px;color:var(--mute);margin-bottom:10px;gap:12px;flex-wrap:wrap}
+.meta b{color:var(--ink);font-weight:600}
+.score{display:flex;gap:14px}
+.score .g{color:var(--ok)} .score .r{color:var(--ko)}
+.track{display:grid;grid-template-columns:repeat(var(--n),1fr);gap:3px;margin-bottom:26px}
+.track i{height:6px;border-radius:2px;background:var(--line);transition:background .3s}
+.track i.cur{background:var(--ink)} .track i.ok{background:var(--ok)} .track i.ko{background:var(--ko)}
+
+.card{background:linear-gradient(180deg,rgba(28,25,22,.96),rgba(22,19,17,.96));border:1px solid var(--line);border-radius:18px;padding:clamp(20px,4vw,36px);box-shadow:0 30px 80px -30px rgba(0,0,0,.7);position:relative;overflow:hidden}
+.card::before{content:attr(data-n);position:absolute;right:-6px;top:-34px;font-size:160px;font-weight:800;letter-spacing:-.06em;color:rgba(239,230,214,.04);pointer-events:none}
+.q{font-size:clamp(20px,3.2vw,26px);font-weight:600;line-height:1.3;letter-spacing:-.01em;margin-bottom:22px;white-space:pre-wrap;position:relative}
+.opts{display:grid;gap:10px}
+.opt{all:unset;box-sizing:border-box;display:grid;grid-template-columns:34px 1fr;gap:14px;align-items:start;padding:14px 16px;border:1px solid var(--line);border-radius:12px;cursor:pointer;transition:border-color .15s,background .15s,transform .15s;background:rgba(255,255,255,.015)}
+.opt:hover:not([disabled]){border-color:var(--mute);transform:translateX(3px)}
+.opt .k{font-family:var(--mono);font-size:13px;font-weight:600;width:34px;height:28px;display:grid;place-items:center;border:1px solid var(--line);border-radius:7px;color:var(--mute)}
+.opt[disabled]{cursor:default}
+.opt.ok{border-color:var(--ok);background:var(--okbg)} .opt.ok .k{background:var(--ok);color:var(--bg);border-color:var(--ok)}
+.opt.ko{border-color:var(--ko);background:var(--kobg)} .opt.ko .k{background:var(--ko);color:var(--bg);border-color:var(--ko)}
+.opt.dim{opacity:.45}
+.opt.ok,.opt.ko{animation:pop .35s cubic-bezier(.2,.9,.3,1.4)}
+@keyframes pop{from{transform:scale(.98)}to{transform:scale(1)}}
+.exp{margin-top:20px;padding:16px 18px;border-left:3px solid var(--acc);background:rgba(255,107,61,.06);border-radius:0 10px 10px 0;font-size:15.5px;color:#ddd2c1;animation:rise .35s ease both}
+.exp::before{content:"-- explicación";display:block;font-family:var(--mono);font-size:12px;color:var(--acc);margin-bottom:6px}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.nav{display:flex;justify-content:space-between;align-items:center;margin-top:22px;gap:12px}
+.btn{all:unset;cursor:pointer;font-family:var(--mono);font-size:14px;font-weight:500;padding:12px 20px;border-radius:999px;border:1px solid var(--line);color:var(--ink);transition:.2s;text-align:center}
+.btn:hover{border-color:var(--ink)}
+.btn.pri{background:var(--acc);border-color:var(--acc);color:#1a0d07;font-weight:600}
+.btn.pri:hover{filter:brightness(1.08)}
+.btn[hidden]{display:none}
+.hint{font-family:var(--mono);font-size:12px;color:var(--mute)}
+
+.end{text-align:center;padding:12px 0}
+.big{font-size:clamp(90px,22vw,180px);font-weight:800;letter-spacing:-.06em;line-height:.9}
+.big small{font-size:.3em;color:var(--mute);letter-spacing:0}
+.verdict{font-family:var(--mono);color:var(--mute);margin:10px 0 26px}
+.row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.fails{text-align:left;margin-top:30px;display:grid;gap:10px}
+.fails li{list-style:none;padding:12px 14px;border:1px solid var(--line);border-radius:10px;font-size:15px}
+.fails li span{display:block;font-family:var(--mono);font-size:13px;color:var(--ok);margin-top:4px}
+
+.rev{display:grid;gap:14px}
+.rev article{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+.rev h3{font-size:17px;font-weight:600;white-space:pre-wrap;margin-bottom:10px}
+.rev h3 b{font-family:var(--mono);color:var(--acc);margin-right:8px}
+.rev ul{list-style:none;display:grid;gap:4px;font-size:15px}
+.rev li{padding-left:22px;position:relative;color:var(--mute)}
+.rev li::before{content:"·";position:absolute;left:6px}
+.rev li.c{color:var(--ok)} .rev li.c::before{content:"✓";left:2px}
+.rev p{margin-top:10px;font-size:14px;color:#c9bfaf;border-top:1px dashed var(--line);padding-top:10px}
+.filter{width:100%;margin-bottom:16px;padding:12px 16px;border-radius:12px;border:1px solid var(--line);background:var(--bg2);color:var(--ink);font:15px var(--mono)}
+.filter:focus{outline:2px solid var(--acc)}
+footer{margin-top:40px;font-family:var(--mono);font-size:12px;color:var(--mute);text-align:center}
+footer a{color:inherit}
+@media (max-width:560px){header{grid-template-columns:1fr}.tabs{justify-self:start}.hint{display:none}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="kicker">Ilerna · Examen modelo · 30 preguntas</div>
+      <h1>Base de<br>Datos <em>B</em></h1>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button role="tab" aria-selected="true" data-mode="test">Test</button>
+      <button role="tab" aria-selected="false" data-mode="review">Repaso</button>
+    </nav>
+  </header>
+  <main id="app"></main>
+  <footer>Preguntas: <a href="https://www.daypo.com/examen-bbdd-b-ilerna.html">Daypo · EXAMEN BBDD B ILERNA</a> (autor: CARRISS)</footer>
+</div>
+<script>
+const DATA = [{"q": "¿Cuál es el propósito de los perfiles de usuario en una base de datos?", "o": ["Establecer restricciones y límites para el uso de la base de datos por parte de un usuario", "Definir el nombre de usuario y la contraseña.", "Establecer restricciones y límites para el uso de la base de datos por parte de un usuario.", "Controlar el acceso a la base de datos en función de la dirección IP del usuario."], "a": [0], "h": "Los perfiles de usuario se utilizan para definir restricciones y límites, como cuotas de espacio o límites de tiempo de sesión, para el uso de la base de datos por parte de un usuario."}, {"q": "¿Cuál es el propósito de las sentencia SET SERVEROUTPUT ON en Oracle Database?", "o": ["Activar la visualización de mensajes en consola", "Habilitar la ejecución de bloques PL/SQL.", "Desactivar la visualización de mensajes en la consola.", "Definir variables de entorno en la base de datos."], "a": [0], "h": "La sentencia SET SERVEROUTPUT ON se utiliza para activar la visualización de mensajes en la consola de Oracle Database, lo que permite ver los resultados de las sentencias dbms_output.put_line."}, {"q": "¿Cuál de las siguientes afirmaciones sobre las vistas personalizadas en base de datos es correcta?", "o": ["Las vistas personalizadas son objetos virtuales que muestran datos de una o varias tablas, pero no almacenan datos por sí mismas", "Las vistas personalizadas son similares a las tablas, pero no permiten operaciones de consulta.", "Las vistas personalizadas se utilizan para eliminar datos de las tablas subyacentes.", "Las vistas personalizadas son siempre físicas y almacenan datos en una tabla."], "a": [0], "h": "Las vistas personalizadas, también conocidas como vistas, son consultas predefinidas almacenadas en la base de datos que permiten a los usuarios acceder y consultar datos desde una o varias tablas como si fueran una sola tabla virtual. Aunque las vistas proporcionan una representación personalizada de los datos, no almacenan datos físicamente en si mismas. En cambio, actúan como consultas guardadas que se ejecutan dinámicamente cuando se accede a ellas."}, {"q": "¿Qué se utiliza en la declaración de un procedimiento o función para indicar que un parámetro es de entrada y no se modificará en el procedimiento?", "o": ["IN", "IS-25", "OUT", "IN OUT"], "a": [0], "h": "La palabra clave IN se utiliza para declarar parámetros que son de entrada y cuyos valores no se modificarán dentro de procedimiento o función."}, {"q": "¿Cuál de las siguientes partes es requerida como obligatoria en un bloque de PL/SQL?", "o": ["Parte ejecutable", "Todas las anteriores", "Parte de declaraciones", "Parte de tratamiento de excepciones"], "a": [0], "h": "La parte ejecutable es la única parte requerida en un bloque lógico PL/SQL. Esta sección contiene las instrucciones de programación y es esencial para que el bloque tenga funcionalidad."}, {"q": "¿Cuál de las siguientes afirmaciones es cierta sobre los cursores implícitos en PL/SQL?", "o": ["Los cursores implícitos se cierran automáticamente al final del bloque PL/SQL", "Los cursores implícitos se utilizan exclusivamente en funciones.", "Los cursores implícitos se cierran automáticamente al final del bloque PL/SQL.", "Los cursores implícitos no pueden utilizarse en triggers."], "a": [0], "h": "Los cursores implícitos en PL/SQL se utilizan automáticamente para manejar consultas en bloques PL/SQL y se cierran automáticamente al final del bloque, lo que simplifica la gestión de cursores en comparación con los cursores explícitos."}, {"q": "¿Cuál es la principal diferencia entre un procedimiento y una función en PL/SQL?", "o": ["Los procedimientos pueden dar o no un valor de salida mientras que las funciones siempre devuelven un valor", "Los procedimientos no pueden ser reutilizados, mientras que las funciones si.", "Los procedimientos pueden tener parámetros, mientras que las funciones no.", "Los procedimientos no pueden contener sentencias SQL, mientras que las funciones sí."], "a": [0], "h": "La diferencia clave entre procedimientos y funciones radica en que las funciones siempre devuelven un valor, mientras que los procedimientos no siempre tienen un valor de retorno"}, {"q": "¿Qué tipo de cursor se utiliza para operaciones SELECT INTO que devuelven un único registro?", "o": ["Implícito", "Explícito", "Declarado", "No se utiliza un cursor"], "a": [0], "h": ""}, {"q": "¿Cuál de las siguiente estructuras de control se utilizan en condicionales, para ejecutar un conjunto de instrucciones dependiendo de si se cumple una condición?", "o": ["Sentencia CASE", "Estructura WHILE.", "Todas las anteriores.", "Estructura repetitiva básica."], "a": [0], "h": ""}, {"q": "¿Qué excepción se produce si una sentencia SELECT devuelve mas de una fila en una operación que espera un único registro?", "o": ["TOO_MANY_ROWS", "ZERO_DIVIDE", "TWO_MORE_ROWS", "NO_DATA_FOUND"], "a": [0], "h": ""}, {"q": "¿Cuál es uno de los beneficios clave de utilizar vistas personalizadas en una base de datos?", "o": ["Las vistas personalizadas mejoran la seguridad de la base de datos al ocultar todas las tablas subyacentes.", "Las vistas personalizadas facilitan la eliminación de registros duplicados de las tablas subyacentes.", "Las vistas personalizadas aceleran las consultas al evitar la necesidad de escribir consultas SQL complejas.", "Las vistas personalizadas permiten almacenar datos de manera eficiente y reducen la necesidad de tablas físicas."], "a": [0], "h": "Una de las ventajas clave de las vistas personalizadas es que permiten ocultar la estrtuctura y los detalles internos de las tablas subyacentes, lo que mejora la seguridad de la base de datos. Los usuarios pueden acceder a los datos a través de vistas sin necesidad de conocer la estructura exacta de las tablas o tener acceso directo a ellas. Esto proporciona un control de acceso mas preciso y evita que los usuarios realicen operaciones no autorizadas en las tablas subyacentes, lo que contribuye a la seguridad general de la base de datos."}, {"q": "¿Qué tipo de trigger ejecuta antes de que se realice la operación de la base de datos?", "o": ["BEFORE", "AFTER", "INSTEAD OF", "DURING"], "a": [0], "h": "Los triggers BEFORE se ejecutan antes de que se complete la operación en la base de datos."}, {"q": "¿Cuál de las siguientes afirmaciones es cierta acerca de los privilegios en una base de datos?", "o": ["Los privilegios permiten a los usuarios realizar acciones específicas en objetos de la base de datos.", "Los privilegios son irrelevantes para la seguridad de la base de datos.", "Los privilegios solo se pueden asignar de manera explícita, no a través de roles.", "Los privilegios solo se aplican a los administradores de la base de datos."], "a": [0], "h": "Los privilegios en una base de datos son permisos que se otorgan a los usuarios para realizar acciones específicas en objetos de la base de datos, como insertar, actualizar, eliminar o consultar datos. Estos privilegios son fundamentales para las seguridad y la gestión de la base de datos, ya que permiten controlar quien puede realizar qué acciones."}, {"q": "¿Cuál de las siguientes afirmaciones sobre los roles en una base de datos es cierta?", "o": ["Los roles son conjuntos de privilegios que se pueden asignar a usuarios.", "Los roles permiten asignar permisos a nivel de columna.", "Los roles simplifican la administración de usuarios, pero no pueden contener privilegios.", "Los roles son exclusivos de MySQL y no se utilizan en Oracle."], "a": [0], "h": ""}, {"q": "Estás desarrollando un sistema de gestión de inventario y decides usar un trigger para mantener un registro de las veces que un producto ha sido actualizado en la base de datos y poder rastrear las actualizaciones de productos. ¿Cuál de las siguientes opciones sería la mejor manera de implementar este trigger?", "o": ["Crear un trigger BEFORE UPDATE que almacene una copia del producto en una tabla de historial antes de que se realice cualquier cambio.", "Crear un trigger AFTER INSERT que incremente un contador cada vez que se añade un nuevo producto.", "Crear un trigger BEFORE DELETE que almacene una copia del producto en una tabla de historial antes de eliminarlo.", "Crear un trigger AFTER UPDATE que incremente un contador cada vez que un producto es actualizado."], "a": [0], "h": "Crear un trigger BEFORE UPDATE que almacene una copia del producto en una tabla de historial antes de que se realice cualquier cambio. es la más adecuada para mantener un registro de las veces que un producto ha sido actualizado. Al almacenar una copia del producto en una tabla de historial antes de que se realice cualquier cambio, se puede tener un registro completo de todas las versiones anteriores del producto. Las otras opciones no abordan directamente el requisito de rastrear actualizaciones de productos."}, {"q": "Selecciona la opción incorrecta sobre las características de la herencia:", "o": ["Pueden crearse subtipos de objetos a partir de otros", "Los subtipos no pueden definir sus propios atributos y métodos", "Se puedan crear subclases más específicas", "Gracias a la herencia se pueden crear superclases abstractas"], "a": [1], "h": ""}, {"q": "¿Cuál de las siguientes afirmaciones es cierta acerca de las tablas anidadas (nested tables) en Oracle PL/SQL?", "o": ["Pueden tener una estructura jerárquica de datos.", "Las tablas anidadas son siempre de tamaño fijo", "Las tablas anidadas se declaran utilizando la palabra clave VARRAY.", "No se pueden almacenar en una base de datos Oracle."], "a": [0], "h": "Las tablas anidadas son estructuras dinámicas que pueden contener una colección de elementos de diferentes tipos de datos, lo que les permite tener una estructura jerárquica o incluso elementos anidados dentro de ellas. No tienen un tamaño fijo y se pueden utilizar en una base de datos Oracle."}, {"q": "Centrándonos en las colecciones de objetos, selecciona la respuesta correcta:", "o": ["Ninguna de las respuestas es correcta", "Son tablas anidadas", "Tienen atributos atómicos", "Es un grupo de elementos del mismo tipo"], "a": [3], "h": ""}, {"q": "Para poder crear tipos de objeto se debe hacer uso de la sentencia:", "o": ["CREATE OBJECT", "CREATE TYPE", "CREATE NAME TYPE", "CREATE OBJECT TYPE"], "a": [1], "h": ""}, {"q": "¿Qué representa el tipo REF en una base de datos objeto-relacional?", "o": ["Un puntero a un objeto.", "Una función para acceder a objetos.", "Un tipo de dato básico.", "Un objeto duplicado."], "a": [0], "h": "REF actúa como un puntero que contiene el OID de un objeto."}, {"q": "Identifica cuál es el programa de desarrollo en Oracle para bases de datos:", "o": ["SQL developer", "SQLi", "MySQL", "LinQ"], "a": [0], "h": ""}, {"q": "¿Qué instrucción se usa para declarar un tipo como abstracto?", "o": ["INSTANTIABLE", "NOT INITIAL", "ABTRACT", "NOT INSTANTIABLE"], "a": [3], "h": ""}, {"q": "Si desea obtener el valor real de un objeto al que apunta una referencia, ¿Qué palabra reservada usaría?", "o": ["DEREF", "ACCESS", "POINTER", "REF"], "a": [0], "h": "DEREF se utiliza para obtener el valor de un objeto al que apunta una referencia."}, {"q": "¿Qué cláusula se utiliza para especificar la superclase en una definición de tipo objeto?", "o": ["ABOVE", "OVER", "UNDER", "SUPER"], "a": [2], "h": "La cláusula UNDER se utiliza para especificar la superclase de un tipo objeto en bases de datos objeto-relacionales."}, {"q": "Se utiliza el polimorfismo cuando...", "o": ["una clase derivada debe verse como la clase principal.", "\nuna clase principal debe verse como una clase derivada.", "una clase secundaria de verse como una clase derivada.", "una clase derivada debe verse como una clase secundaria."], "a": [0], "h": "El polimorfismo es un concepto fundamental en la programación orientada a objetos que permite que los objetos de clases derivadas se comporten como objetos de la clase principal."}, {"q": "¿Qué es el encapsulamiento en la programación orientada a objetos?", "o": ["El mecanismo para agrupar atributos y métodos dentro de una clase.", "La capacidad de definir múltiples funciones con el mismo nombre.", "\nLa herencia de atributos y métodos de una superclase.", "La capacidad de tratar objetos derivados como si fueran de su superclase."], "a": [0], "h": "El encapsulamiento se refiere a la agrupación de datos (atributos) y acciones (métodos) en una unidad lógica llamada clase."}, {"q": "Si queremos heredar en el objeto \"tipo_coche\" los campos el objeto \"tipo_vehiculo\" cual es la instrucción que nos falta siguiendo este código.\n\nCREATE OR REPLACE TYPE tipo_vehiculo AS OBJECT (\n\nid_v NUMBER,\n\nmake VARCHAR2(15),\n\nmodelo VARCHAR2(15)\n\n) NOT FINAL NOT INSTANTIABLE;\n\n/\n\nCREATE TYPE tipo_coche ____?____ tipo_vehiculo (\n\nconvertible CHAR(1)\n\n);", "o": ["\nREFERENCE", "UNDER", "FROM", "WITH"], "a": [1], "h": ""}, {"q": "Una de las principales ventajas de la programación orientada a objetos (POO) es...", "o": ["la herencia.", "la inserción de estructuras repetitivas.", "la inserción de condicionales.", "Todas las respuestas son correctas."], "a": [0], "h": ""}, {"q": "En relación con los métodos en objetos, selecciona la respuesta correcta:", "o": ["Son punteros a un objeto", "Acciones que modelan el comportamiento de los objetos", "Todas las respuestas son correctas", "Mejoramos la búsqueda de información"], "a": [1], "h": ""}, {"q": "¿Cuál de las siguientes afirmaciones es verdadera sobre una variable de tipo VARRAY en Oracle PL/SQL?", "o": ["Los elementos de un VARRAY deben ser del mismo tipo de datos.", "Los VARRAYs siempre ocupan una cantidad fija de espacio en memoria.", "Pueden tener un número variable de elementos.", "Se declaran utilizando la palabra clave NESTED TABLE."], "a": [0], "h": "En un VARRAY (Variable Array), todos los elementos deben ser del mismo tipo de datos, y el número de elementos se define cuando se declara el VARRAY."}];
+const $app = document.getElementById('app');
+const L = 'ABCD';
+const norm = s => s.trim().replace(/[.\s]+$/,'').toLowerCase();
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+// Correct if the chosen text matches a correct option (source repeats some answers with only a trailing dot changed).
+const isRight = (q, i) => q.a.some(a => norm(q.o[a]) === norm(q.o[i]));
+
+let S;
+function start(ids) {
+  S = { order: shuffle(ids), pos: 0, res: {} };
+  S.order = S.order.map(id => ({ id, opts: shuffle(DATA[id].o.map((_, i) => i)) }));
+  renderTest();
+}
+
+function renderTest() {
+  $app.replaceChildren();
+  if (S.pos >= S.order.length) return renderEnd();
+  const { id, opts } = S.order[S.pos], q = DATA[id], done = S.res[id] !== undefined;
+  const ok = Object.values(S.res).filter(Boolean).length, ko = Object.values(S.res).filter(v => !v).length;
+
+  const meta = el('div', 'meta');
+  meta.innerHTML = `<span>Pregunta <b>${String(S.pos + 1).padStart(2, '0')}</b> / ${S.order.length}</span>`;
+  const sc = el('span', 'score'); sc.innerHTML = `<span class="g">✓ ${ok}</span><span class="r">✗ ${ko}</span>`; meta.append(sc);
+
+  const track = el('div', 'track'); track.style.setProperty('--n', S.order.length);
+  S.order.forEach((o, i) => { const t = el('i'); if (S.res[o.id] !== undefined) t.className = S.res[o.id] ? 'ok' : 'ko'; else if (i === S.pos) t.className = 'cur'; track.append(t); });
+
+  const card = el('section', 'card'); card.dataset.n = String(id + 1).padStart(2, '0');
+  card.append(el('h2', 'q', q.q));
+  const box = el('div', 'opts'); box.setAttribute('role', 'group');
+  opts.forEach((oi, k) => {
+    const b = el('button', 'opt'); b.type = 'button';
+    b.append(el('span', 'k', L[k]), el('span', '', q.o[oi]));
+    b.onclick = () => answer(oi);
+    if (done) {
+      b.disabled = true;
+      if (isRight(q, oi)) b.classList.add('ok');
+      else if (oi === S.pick) b.classList.add('ko');
+      else b.classList.add('dim');
+    }
+    box.append(b);
+  });
+  card.append(box);
+  if (done && q.h) card.append(el('div', 'exp', q.h));
+
+  const nav = el('div', 'nav');
+  nav.append(el('span', 'hint', done ? 'Enter → siguiente' : 'Teclas A–D o 1–4'));
+  const next = el('button', 'btn pri', S.pos + 1 === S.order.length ? 'Ver resultado' : 'Siguiente →');
+  next.hidden = !done; next.onclick = () => { S.pos++; renderTest(); };
+  nav.append(next);
+  card.append(nav);
+
+  $app.append(meta, track, card);
+  if (done) next.focus();
+}
+
+function answer(oi) {
+  const { id } = S.order[S.pos];
+  if (S.res[id] !== undefined) return;
+  S.pick = oi;
+  S.res[id] = isRight(DATA[id], oi);
+  renderTest();
+}
+
+function renderEnd() {
+  const ids = S.order.map(o => o.id), ok = ids.filter(i => S.res[i]).length, fails = ids.filter(i => !S.res[i]);
+  const nota = Math.round(ok / ids.length * 100) / 10;
+  try { const k = 'bddb-best', b = +localStorage.getItem(k) || 0; if (ids.length === DATA.length && nota > b) localStorage.setItem(k, nota); } catch (e) {}
+  let best = null; try { best = localStorage.getItem('bddb-best'); } catch (e) {}
+  const card = el('section', 'card end');
+  const big = el('div', 'big'); big.innerHTML = `${nota.toLocaleString('es')}<small>/10</small>`;
+  big.style.color = nota >= 5 ? 'var(--ok)' : 'var(--ko)';
+  card.append(big, el('div', 'verdict', `${ok} aciertos · ${fails.length} fallos${best ? ` · mejor nota: ${(+best).toLocaleString('es')}` : ''}`));
+  const row = el('div', 'row');
+  if (fails.length) { const f = el('button', 'btn pri', `Repetir falladas (${fails.length})`); f.onclick = () => start(fails); row.append(f); }
+  const r = el('button', 'btn', 'Test completo de nuevo'); r.onclick = () => start(DATA.map((_, i) => i)); row.append(r);
+  card.append(row);
+  if (fails.length) {
+    const ul = el('ul', 'fails');
+    fails.forEach(i => { const li = el('li', '', DATA[i].q); li.append(el('span', '', '✓ ' + DATA[i].a.map(a => DATA[i].o[a]).join(' / '))); ul.append(li); });
+    card.append(ul);
+  }
+  $app.replaceChildren(card);
+}
+
+function renderReview() {
+  const input = el('input', 'filter'); input.type = 'search'; input.placeholder = 'Buscar pregunta o respuesta…'; input.setAttribute('aria-label', 'Buscar');
+  const list = el('div', 'rev');
+  const items = DATA.map((q, i) => {
+    const a = el('article');
+    const h = el('h3'); h.append(el('b', '', String(i + 1).padStart(2, '0')), q.q); a.append(h);
+    const ul = el('ul'); q.o.forEach((o, j) => ul.append(el('li', q.a.includes(j) ? 'c' : '', o))); a.append(ul);
+    if (q.h) a.append(el('p', '', q.h));
+    list.append(a);
+    return [a, (q.q + ' ' + q.o.join(' ') + ' ' + q.h).toLowerCase()];
+  });
+  input.oninput = () => { const t = input.value.toLowerCase(); items.forEach(([a, s]) => a.hidden = !s.includes(t)); };
+  $app.replaceChildren(input, list);
+}
+
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.tabs button').forEach(x => x.setAttribute('aria-selected', x === b));
+  b.dataset.mode === 'test' ? renderTest() : renderReview();
+});
+
+document.addEventListener('keydown', e => {
+  if (!S || S.pos >= S.order.length || !$app.querySelector('.opts') || e.target.tagName === 'INPUT') return;
+  const { id, opts } = S.order[S.pos], done = S.res[id] !== undefined;
+  const k = '1234'.indexOf(e.key) >= 0 ? '1234'.indexOf(e.key) : L.indexOf(e.key.toUpperCase());
+  if (!done && k >= 0 && k < opts.length && e.key.length === 1) answer(opts[k]);
+  else if (done && (e.key === 'Enter' || e.key === 'ArrowRight')) { e.preventDefault(); S.pos++; renderTest(); }
+});
+
+start(DATA.map((_, i) => i));
+</script>
+</body>
+</html>

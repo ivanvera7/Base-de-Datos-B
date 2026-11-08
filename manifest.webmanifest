@@ -1,0 +1,21 @@
+{
+ "name": "Base de Datos B",
+ "short_name": "Base de Datos B",
+ "start_url": "./",
+ "display": "standalone",
+ "background_color": "#1C8C95",
+ "theme_color": "#4FC1C8",
+ "icons": [
+  {
+   "src": "icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "any maskable"
+  },
+  {
+   "src": "icon.svg",
+   "sizes": "any",
+   "type": "image/svg+xml"
+  }
+ ]
+}
